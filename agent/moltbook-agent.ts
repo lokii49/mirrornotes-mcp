@@ -9,17 +9,17 @@
  *   4. Post new content every 3 days (Claude writes it)
  */
 
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
 const MOLTBOOK = "https://www.moltbook.com/api/v1";
 const MOLTBOOK_KEY = process.env.MOLTBOOK_API_KEY!;
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY!;
+const OPENAI_KEY = process.env.OPENAI_API_KEY!;
 const DRY_RUN = process.env.DRY_RUN === "true";
 
 if (!MOLTBOOK_KEY) { console.error("MOLTBOOK_API_KEY not set"); process.exit(1); }
-if (!ANTHROPIC_KEY) { console.error("ANTHROPIC_API_KEY not set"); process.exit(1); }
+if (!OPENAI_KEY) { console.error("OPENAI_API_KEY not set"); process.exit(1); }
 
-const claude = new Anthropic({ apiKey: ANTHROPIC_KEY });
+const openai = new OpenAI({ apiKey: OPENAI_KEY });
 
 const moltHeaders = {
   "Authorization": `Bearer ${MOLTBOOK_KEY}`,
@@ -64,13 +64,15 @@ Rules:
 - If a post is not related to your expertise, say "not_relevant" and nothing else`;
 
 async function ask(prompt: string, maxTokens = 400): Promise<string> {
-  const msg = await claude.messages.create({
-    model: "claude-haiku-4-5-20251001",
+  const msg = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
     max_tokens: maxTokens,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: prompt }],
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: prompt },
+    ],
   });
-  return (msg.content[0] as any).text.trim();
+  return msg.choices[0].message.content?.trim() ?? "";
 }
 
 // ── Verification solver ──────────────────────────────────────────────────────
