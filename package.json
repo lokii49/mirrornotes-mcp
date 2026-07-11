@@ -1,6 +1,6 @@
 {
   "name": "@mirrornotes/mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server for private journaling — daily prompts, mood reflection, and weekly review tools powered by the MirrorNotes philosophy",
   "keywords": [
     "mcp",

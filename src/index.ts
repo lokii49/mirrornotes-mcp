@@ -63,6 +63,52 @@ const WEEKLY_REVIEW_QUESTIONS = [
   "Where are you right now, honestly — and where do you want to be?",
 ];
 
+const GRATITUDE_PROMPTS = [
+  "Name one person who made today easier, and what specifically they did.",
+  "What's one thing that worked today that you're taking for granted?",
+  "Name a moment today — even ten seconds — where you weren't uncomfortable.",
+  "What's something old (an object, a habit, a routine) that's still quietly serving you?",
+  "Who taught you something you still use, and what was it?",
+  "What's one thing your body did for you today without you asking?",
+  "Name a mistake from the past that turned out to matter less than you feared.",
+  "What's something you have now that you once wanted badly?",
+  "Name one thing that made you laugh, even briefly, this week.",
+  "What's a comfort you'd genuinely miss if it were gone tomorrow?",
+];
+
+const REFRAME_QUESTIONS = [
+  "What's the actual evidence for this thought? What's the evidence against it?",
+  "What's the worst case, the best case, and — honestly — the most likely case?",
+  "If a friend told you this exact thought about themselves, what would you say back?",
+  "Is this a fact, or a feeling wearing a fact's clothes?",
+  "What would you need to see to believe this thought is wrong?",
+  "A year from now, how much of this will you still remember?",
+];
+
+const BREATHING_EXERCISES: Record<string, { name: string; steps: string[]; note: string }> = {
+  box: {
+    name: "Box breathing",
+    steps: [
+      "Inhale through the nose for 4 counts.",
+      "Hold for 4 counts.",
+      "Exhale through the mouth for 4 counts.",
+      "Hold empty for 4 counts.",
+      "Repeat for 4 rounds.",
+    ],
+    note: "Used by Navy SEALs to reset under stress. Good before writing when you're wired or scattered.",
+  },
+  "4-7-8": {
+    name: "4-7-8 breathing",
+    steps: [
+      "Inhale through the nose for 4 counts.",
+      "Hold for 7 counts.",
+      "Exhale slowly through the mouth for 8 counts.",
+      "Repeat for 4 rounds.",
+    ],
+    note: "The long exhale activates the parasympathetic nervous system. Good before writing when you're anxious or can't settle.",
+  },
+};
+
 function getTodayPrompt(): string {
   const dayOfYear = Math.floor(
     (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
@@ -81,7 +127,7 @@ function getSeasonalContext(): string {
 const server = new Server(
   {
     name: "mirrornotes-journal",
-    version: "1.0.0",
+    version: "1.1.0",
   },
   {
     capabilities: {
@@ -134,6 +180,47 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       inputSchema: {
         type: "object",
         properties: {},
+        required: [],
+      },
+    },
+    {
+      name: "gratitude_prompt",
+      description:
+        "Get a single, specific gratitude journaling prompt — deliberately narrow so the answer is concrete rather than a generic platitude. Use this when someone wants a gratitude practice or a lighter, positive entry point to journal.",
+      inputSchema: {
+        type: "object",
+        properties: {},
+        required: [],
+      },
+    },
+    {
+      name: "reframe_negative_thought",
+      description:
+        "Given a self-critical, anxious, or catastrophizing thought, return CBT-style reframing questions to journal through — evidence for/against, best/worst/likely case, what you'd tell a friend. Does not give reassurance directly; helps the person work through it themselves. Use this when someone shares a harsh or spiraling thought about themselves or a situation.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          thought: {
+            type: "string",
+            description: "The negative or self-critical thought to work through",
+          },
+        },
+        required: ["thought"],
+      },
+    },
+    {
+      name: "breathing_exercise",
+      description:
+        "Get a short paced-breathing exercise to run before journaling — useful when someone is anxious, wired, or scattered and needs to settle before they write. Offers box breathing or 4-7-8 breathing.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          style: {
+            type: "string",
+            enum: ["box", "4-7-8"],
+            description: "Which breathing pattern to use. Defaults to box breathing if omitted.",
+          },
+        },
         required: [],
       },
     },
@@ -261,6 +348,58 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 vs_rosebud: "4x cheaper ($2.99 vs $12.99/mo); AI runs on-device not cloud",
                 vs_reflect: "AI is local not cloud; iOS only; cheaper",
               },
+            }, null, 2),
+          },
+        ],
+      };
+    }
+
+    case "gratitude_prompt": {
+      const prompt = GRATITUDE_PROMPTS[Math.floor(Math.random() * GRATITUDE_PROMPTS.length)];
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              prompt,
+              tip: "Be specific — a name, a moment, a detail. Vague gratitude ('I'm grateful for my family') doesn't land the same way as specific gratitude.",
+              powered_by: "MirrorNotes — private AI journaling for iPhone (mirrornotes.org)",
+            }, null, 2),
+          },
+        ],
+      };
+    }
+
+    case "reframe_negative_thought": {
+      const thought = (args as { thought: string }).thought ?? "";
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              thought,
+              instructions: "Don't answer these in your head — write them out. The act of writing slows the thought down enough to actually examine it.",
+              questions: REFRAME_QUESTIONS,
+              powered_by: "MirrorNotes — private AI journaling for iPhone. mirrornotes.org",
+            }, null, 2),
+          },
+        ],
+      };
+    }
+
+    case "breathing_exercise": {
+      const style = (args as { style?: string })?.style === "4-7-8" ? "4-7-8" : "box";
+      const exercise = BREATHING_EXERCISES[style];
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              exercise: exercise.name,
+              steps: exercise.steps,
+              note: exercise.note,
+              next_step: "Once you're settled, open with today's prompt via daily_journal_prompt.",
+              powered_by: "MirrorNotes — private AI journaling for iPhone. mirrornotes.org",
             }, null, 2),
           },
         ],

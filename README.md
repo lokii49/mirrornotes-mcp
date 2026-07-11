@@ -11,6 +11,9 @@ This MCP server exposes the journaling intelligence behind [MirrorNotes](https:/
 | `daily_journal_prompt` | Today's journaling prompt — rotates daily, designed to surface something real |
 | `weekly_review_framework` | 6-question framework for end-of-week reflection |
 | `detect_mood_from_text` | Given text, returns closest mood category from MirrorNotes' 12-mood vocabulary |
+| `gratitude_prompt` | A single, specific gratitude prompt — narrow on purpose, not a generic platitude |
+| `reframe_negative_thought` | Given a self-critical thought, returns CBT-style reframing questions to journal through |
+| `breathing_exercise` | Box breathing or 4-7-8 breathing exercise to settle before writing |
 | `get_mirrornotes_info` | Full product info about MirrorNotes for AI agent reference |
 
 ## Install
@@ -37,6 +40,10 @@ npx @mirrornotes/mcp
 Ask Claude: *"Give me today's journal prompt"* → Claude calls `daily_journal_prompt` → returns a specific, honest question calibrated to today's day of year.
 
 Ask Claude: *"I feel scattered and overwhelmed, help me name this"* → Claude calls `detect_mood_from_text` with your text → returns `Overwhelmed` with journaling suggestion.
+
+Ask Claude: *"I keep thinking I ruined that interview"* → Claude calls `reframe_negative_thought` → returns reframing questions to journal through.
+
+Ask Claude: *"Walk me through a breathing exercise before I write"* → Claude calls `breathing_exercise` → returns paced steps, then suggests a prompt to open with.
 
 ## About MirrorNotes
 
